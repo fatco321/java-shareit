@@ -46,10 +46,7 @@ public class UserService {
     }
 
     public UserDto updateUser(UserDto userDto, long id) {
-        if (userStorage.getEmailList().contains(userDto.getEmail())) {
-            log.warn("Users with id: {} tried update email {} already exist ", id, userDto.getEmail());
-            throw new ConflictException("Cannot update email, email already used");
-        }
+        checkUserEmail(userDto, id);
         User user = userStorage.getUserById(id).orElseThrow(() ->
                 new NotFoundException(String.format("User %s not found", id)));
         userStorage.deleteUser(id);
@@ -65,5 +62,12 @@ public class UserService {
         userStorage.saveUser(user);
         log.info("Update user with id: {}", id);
         return findUserById(id);
+    }
+
+    private void checkUserEmail(UserDto userDto, long id) {
+        if (userStorage.getEmailList().contains(userDto.getEmail())) {
+            log.warn("Users with id: {} tried update email {} already exist ", id, userDto.getEmail());
+            throw new ConflictException("Cannot update email, email already used");
+        }
     }
 }

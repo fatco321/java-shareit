@@ -20,9 +20,7 @@ public class InMemoryUserStorage {
     }
 
     public User saveUser(User user) {
-        if (emailList.contains(user.getEmail())) {
-            throw new ConflictException("email already used");
-        }
+        checkEmail(user);
         if (user.getId() == 0) {
             user.setId(setId());
         }
@@ -43,5 +41,11 @@ public class InMemoryUserStorage {
         User user = getUserById(id).orElseThrow(() -> new NotFoundException(String.format("User %s not found", id)));
         emailList.remove(user.getEmail());
         return userStorageMap.remove(id);
+    }
+
+    private void checkEmail(User user) {
+        if (emailList.contains(user.getEmail())) {
+            throw new ConflictException("email already used");
+        }
     }
 }
