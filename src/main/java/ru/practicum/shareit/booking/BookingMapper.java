@@ -45,7 +45,7 @@ public class BookingMapper {
                 .build();
     }
 
-    public static ShortBookingDto toShortBook(Booking booking){
+    public static ShortBookingDto toShortBook(Booking booking) {
         return ShortBookingDto.builder()
                 .id(booking.getId())
                 .start(booking.getStartTime())
