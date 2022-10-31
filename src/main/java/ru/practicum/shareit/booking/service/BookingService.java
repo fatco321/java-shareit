@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import ru.practicum.shareit.booking.BookingMapper;
@@ -15,6 +16,7 @@ import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.storage.ItemRepository;
 import ru.practicum.shareit.user.storage.UserRepository;
 
+import javax.xml.bind.ValidationException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +30,7 @@ public class BookingService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
 
-    private void checkBooking(Booking booking) {
+    private boolean checkBooking(Booking booking) {
         if (Objects.equals(booking.getBooker().getId(), booking.getItem().getOwner().getId())) {
             throw new NotFoundException("User is item owner");
         }
@@ -44,16 +46,21 @@ public class BookingService {
         if (booking.getEndTime().isBefore(booking.getStartTime())) {
             throw new BadRequestException("Start time is after end time");
         }
+        return true;
     }
 
+    @SneakyThrows
     public BookingDtoOut createBooking(BookingDto bookingDto, Long userId) {
         Booking booking = BookingMapper.fromBookingDto(bookingDto,
                 userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found")),
                 itemRepository.findById(bookingDto.getItemId()).orElseThrow(() ->
                         new NotFoundException("Item not found")));
         booking.setStatus(Status.WAITING);
-        checkBooking(booking);
-        return BookingMapper.toBookingDtoOut(bookingRepository.save(booking));
+        if (checkBooking(booking)) {
+            return BookingMapper.toBookingDtoOut(bookingRepository.save(booking));
+        } else {
+            throw new ValidationException("Validation error");
+        }
     }
 
     public BookingDtoOut getBooking(Long bookingId, Long userId) {

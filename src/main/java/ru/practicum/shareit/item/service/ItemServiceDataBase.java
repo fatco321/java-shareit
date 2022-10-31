@@ -95,8 +95,7 @@ public class ItemServiceDataBase implements ItemService {
             return new ArrayList<>();
         }
         List<ItemDto> itemsDto = new ArrayList<>();
-        for (Item item : itemRepository
-                .findByNameContainsIgnoreCaseOrDescriptionContainsIgnoreCaseAndAvailableTrue(word, word)) {
+        for (Item item : itemRepository.findItemByText(word)) {
             itemsDto.add(ItemMapper.toItemDto(item));
         }
         return itemsDto;
