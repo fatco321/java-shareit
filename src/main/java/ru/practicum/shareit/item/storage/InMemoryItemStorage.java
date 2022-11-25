@@ -21,7 +21,7 @@ public class InMemoryItemStorage {
 
     public List<Item> getAllItemsByUserId(long userId) {
         return itemStorageMap.values().stream()
-                .filter(item -> item.getOwnerId() == userId).collect(Collectors.toList());
+                .filter(item -> item.getOwner().getId() == userId).collect(Collectors.toList());
     }
 
     public Optional<Item> findItemById(long id) {
