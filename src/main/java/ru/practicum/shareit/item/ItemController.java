@@ -4,9 +4,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.Create;
+import ru.practicum.shareit.exception.PageableException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
+import ru.practicum.shareit.util.LimitPageable;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -34,13 +36,17 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> getAllUserItems(@RequestHeader("X-Sharer-User-Id") @NotNull long userId) {
-        return itemService.getAllItemsByUserId(userId);
+    public List<ItemDto> getAllUserItems(@RequestHeader("X-Sharer-User-Id") @NotNull long userId,
+                                         @RequestParam(name = "from", required = false) Integer from,
+                                         @RequestParam(name = "size", required = false) Integer size) throws PageableException {
+        return itemService.getAllItemsByUserId(userId, LimitPageable.createPageable(from, size));
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(name = "text", defaultValue = "") String word) {
-        return itemService.searchItems(word);
+    public List<ItemDto> searchItems(@RequestParam(name = "text", defaultValue = "") String word,
+                                     @RequestParam(name = "from", required = false) Integer from,
+                                     @RequestParam(name = "size", required = false) Integer size) throws PageableException {
+        return itemService.searchItems(word, LimitPageable.createPageable(from, size));
     }
 
     @PatchMapping("{id}")

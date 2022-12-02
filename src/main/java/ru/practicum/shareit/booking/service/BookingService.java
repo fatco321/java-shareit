@@ -2,6 +2,7 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import ru.practicum.shareit.booking.BookingMapper;
@@ -87,13 +88,18 @@ public class BookingService {
         return BookingMapper.toBookingDtoOut(bookingRepository.save(booking));
     }
 
-    public List<BookingDtoOut> getAllByUserId(Long userId, String state) {
+    public List<BookingDtoOut> getAllByUserId(Long userId, String state, Pageable pageable) {
         if (!ObjectUtils.containsConstant(State.values(), state)) {
             throw new BadRequestException("Unknown state: " + state);
         }
         userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException("User with id " + userId + " not found"));
-        List<Booking> bookingList = bookingRepository.findAllByBooker_IdOrderByStartTimeDesc(userId);
+        List<Booking> bookingList;
+        if (pageable == null) {
+            bookingList = bookingRepository.findAllByBooker_IdOrderByStartTimeDesc(userId);
+        } else {
+            bookingList = bookingRepository.findAllByBooker_IdOrderByStartTimeDesc(userId, pageable).toList();
+        }
         bookingList = getBookingByState(State.valueOf(state), bookingList);
         List<BookingDtoOut> bookingDtoList = new ArrayList<>();
         for (Booking booking : bookingList) {
@@ -102,13 +108,18 @@ public class BookingService {
         return bookingDtoList;
     }
 
-    public List<BookingDtoOut> getAllByOwnerId(Long ownerId, String state) {
+    public List<BookingDtoOut> getAllByOwnerId(Long ownerId, String state, Pageable pageable) {
         userRepository.findById(ownerId).orElseThrow(() ->
                 new NotFoundException("User with id " + ownerId + " not found"));
         if (!ObjectUtils.containsConstant(State.values(), state)) {
             throw new BadRequestException("Unknown state: " + state);
         }
-        List<Booking> bookingList = bookingRepository.findByItem_Owner_IdOrderByIdDesc(ownerId);
+        List<Booking> bookingList;
+        if (pageable == null) {
+            bookingList = bookingRepository.findByItem_Owner_IdOrderByIdDesc(ownerId);
+        } else {
+            bookingList = bookingRepository.findByItem_Owner_IdOrderByIdDesc(ownerId, pageable).toList();
+        }
         bookingList = getBookingByState(State.valueOf(state), bookingList);
         List<BookingDtoOut> bookingDtoList = new ArrayList<>();
         for (Booking booking : bookingList) {

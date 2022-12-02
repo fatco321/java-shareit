@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoOut;
 import ru.practicum.shareit.booking.service.BookingService;
+import ru.practicum.shareit.exception.PageableException;
+import ru.practicum.shareit.util.LimitPageable;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -43,16 +45,20 @@ public class BookingController {
     @GetMapping
     public List<BookingDtoOut> getAllByUserId(
             @RequestHeader("X-Sharer-User-Id") @NotNull Long userId,
-            @RequestParam(defaultValue = "ALL") String state) {
+            @RequestParam(defaultValue = "ALL") String state,
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", required = false) Integer size) throws PageableException {
 
-        return bookingService.getAllByUserId(userId, state);
+        return bookingService.getAllByUserId(userId, state, LimitPageable.createPageable(from, size));
     }
 
     @GetMapping("/owner")
     public List<BookingDtoOut> getAllByOwnerId(
             @RequestHeader("X-Sharer-User-Id") @NotNull Long ownerId,
-            @RequestParam(defaultValue = "ALL") String state
-    ) {
-        return bookingService.getAllByOwnerId(ownerId, state);
+            @RequestParam(defaultValue = "ALL") String state,
+            @RequestParam(name = "from", required = false) Integer from,
+            @RequestParam(name = "size", required = false) Integer size
+    ) throws PageableException {
+        return bookingService.getAllByOwnerId(ownerId, state, LimitPageable.createPageable(from, size));
     }
 }

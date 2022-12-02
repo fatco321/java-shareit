@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.item.ItemMapper;
@@ -24,7 +25,7 @@ public class ItemServiceInMemory implements ItemService {
     private final InMemoryItemStorage itemStorage;
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(long userId) {
+    public List<ItemDto> getAllItemsByUserId(long userId, Pageable pageable) {
         userStorage.getUserById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User with id: %s now found", userId)));
         List<ItemDto> itemDtoList = new ArrayList<>();
@@ -72,7 +73,7 @@ public class ItemServiceInMemory implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchItems(String word) {
+    public List<ItemDto> searchItems(String word, Pageable pageable) {
         if (word.isEmpty()) {
             return new ArrayList<>();
         }
