@@ -20,9 +20,9 @@ public class ItemRequestService {
     private final UserServiceDataBase userService;
 
     public ItemRequestDto create(ItemRequestDto itemRequestDto, Long requesterId) {
-        return ItemRequestMapper.toRequestItemDto(itemRequestRepository.save
-                (ItemRequestMapper.fromRequestItemDto(itemRequestDto,
-                        UserMapper.fromUserDto(userService.findUserById(requesterId)))));
+        return ItemRequestMapper.toRequestItemDto(itemRequestRepository.save(
+                ItemRequestMapper.fromRequestItemDto(itemRequestDto, UserMapper.fromUserDto(userService
+                        .findUserById(requesterId)))));
     }
 
     public ItemRequestDto getById(Long requestId, Long requesterId) {
