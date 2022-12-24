@@ -52,6 +52,9 @@ public class ItemServiceDataBase implements ItemService {
 
     @Override
     public List<ItemDto> getAllItemsByUserId(long userId, Pageable pageable) {
+        if (userService.findUserById(userId) == null) {
+            throw new NotFoundException("User with id " + userId + " not found");
+        }
         User user = UserMapper.fromUserDto(userService.findUserById(userId));
         List<Item> items;
         if (pageable != null) {
@@ -127,7 +130,7 @@ public class ItemServiceDataBase implements ItemService {
     @Override
     public ItemDto getItemById(Long itemId, Long userId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
-                new NotFoundException("Item with" + itemId + " not found"));
+                new NotFoundException("Item with " + itemId + " not found"));
         ItemDto itemDto = ItemMapper.toItemDto(item);
         itemDto.setComments(findComments(itemId));
         if (item.getOwner().getId().equals(userId)) {
