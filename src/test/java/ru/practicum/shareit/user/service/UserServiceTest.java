@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.User;
@@ -41,7 +42,7 @@ public class UserServiceTest {
     @Test
     void test02_addUserWithEmailExist() {
         User user = User.builder().id(1L).name("user").email("user@user.ru").build();
-        when(userRepository.save(user)).thenThrow(ConflictException.class);
+        when(userRepository.save(user)).thenThrow(DataIntegrityViolationException.class);
         assertThrows(ConflictException.class, () -> userService.createUser(UserMapper.toUserDto(user)));
     }
 
@@ -102,5 +103,4 @@ public class UserServiceTest {
         assertThrows(NotFoundException.class, () -> userService.updateUser(userDto, 1));
         verify(userRepository).findById(1L);
     }
-
 }
