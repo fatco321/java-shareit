@@ -49,8 +49,8 @@ public class BookingServiceTest {
     private User booker;
     private Item item;
     private Booking booking;
-    private  BookingDto bookingDto;
-    private  BookingDtoOut bookingDtoOut;
+    private BookingDto bookingDto;
+    private BookingDtoOut bookingDtoOut;
 
     @BeforeEach
     void setup() {
@@ -231,5 +231,61 @@ public class BookingServiceTest {
         assertEquals(bookingDtoOut, result.get(0));
         verify(bookingRepository).findByItem_Owner_IdOrderByIdDesc(1L,
                 LimitPageable.createPageable(0, 5));
+    }
+
+    @Test
+    void test20_getAllByOwnerIfStateReject() throws PageableException {
+        booking.setStatus(Status.REJECTED);
+        bookingDtoOut.setStatus(Status.REJECTED);
+        Page<Booking> bookingPage = new PageImpl<>(Collections.singletonList(booking));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItem_Owner_IdOrderByIdDesc(1L,
+                LimitPageable.createPageable(0, 5))).thenReturn(bookingPage);
+        List<BookingDtoOut> result = bookingService.getAllByOwnerId(1L, String.valueOf(State.REJECTED),
+                LimitPageable.createPageable(0, 5));
+        assertFalse(result.isEmpty());
+        assertEquals(bookingDtoOut, result.get(0));
+    }
+
+    @Test
+    void test20_getAllByOwnerIfStatePAST() throws PageableException {
+        booking.setEndTime(LocalDateTime.now().minusDays(10));
+        bookingDtoOut.setEnd(booking.getEndTime());
+        Page<Booking> bookingPage = new PageImpl<>(Collections.singletonList(booking));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItem_Owner_IdOrderByIdDesc(1L,
+                LimitPageable.createPageable(0, 5))).thenReturn(bookingPage);
+        List<BookingDtoOut> result = bookingService.getAllByOwnerId(1L, String.valueOf(State.PAST),
+                LimitPageable.createPageable(0, 5));
+        assertFalse(result.isEmpty());
+        assertEquals(bookingDtoOut, result.get(0));
+    }
+
+    @Test
+    void test20_getAllByOwnerIfStateFUTURE() throws PageableException {
+        Page<Booking> bookingPage = new PageImpl<>(Collections.singletonList(booking));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItem_Owner_IdOrderByIdDesc(1L,
+                LimitPageable.createPageable(0, 5))).thenReturn(bookingPage);
+        List<BookingDtoOut> result = bookingService.getAllByOwnerId(1L, String.valueOf(State.FUTURE),
+                LimitPageable.createPageable(0, 5));
+        assertFalse(result.isEmpty());
+        assertEquals(bookingDtoOut, result.get(0));
+    }
+
+    @Test
+    void test20_getAllByOwnerIfStateCURRENT() throws PageableException {
+        booking.setStartTime(LocalDateTime.now().minusDays(10));
+        booking.setEndTime(LocalDateTime.now().plusDays(10));
+        bookingDtoOut.setStart(booking.getStartTime());
+        bookingDtoOut.setEnd(booking.getEndTime());
+        Page<Booking> bookingPage = new PageImpl<>(Collections.singletonList(booking));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(owner));
+        when(bookingRepository.findByItem_Owner_IdOrderByIdDesc(1L,
+                LimitPageable.createPageable(0, 5))).thenReturn(bookingPage);
+        List<BookingDtoOut> result = bookingService.getAllByOwnerId(1L, String.valueOf(State.CURRENT),
+                LimitPageable.createPageable(0, 5));
+        assertFalse(result.isEmpty());
+        assertEquals(bookingDtoOut, result.get(0));
     }
 }
