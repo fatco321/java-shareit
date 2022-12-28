@@ -7,10 +7,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.storage.BookingRepository;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.exception.PageableException;
 import ru.practicum.shareit.item.CommentMapper;
 import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -19,14 +22,17 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.CommentRepository;
 import ru.practicum.shareit.item.storage.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.srorage.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
 import ru.practicum.shareit.user.storage.UserRepository;
+import ru.practicum.shareit.util.LimitPageable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
@@ -45,6 +51,8 @@ public class ItemServiceTest {
     private CommentRepository commentRepository;
     @Mock
     private BookingRepository bookingRepository;
+    @Mock
+    private ItemRequestRepository itemRequestRepository;
     @InjectMocks
     private ItemServiceDataBase itemService;
     private User user;
@@ -162,5 +170,51 @@ public class ItemServiceTest {
                 .thenReturn(new ArrayList<>());
         assertThrows(BadRequestException.class, () ->
                 itemService.addComment(CommentMapper.commentDto(comment), 1L, 1L));
+    }
+
+    @Test
+    void test14_findItemWithPage() throws PageableException {
+        Page<Item> itemPage = new PageImpl<>(Collections.singletonList(item));
+        when(itemRepository.findItemByText("item", LimitPageable.createPageable(0, 5)))
+                .thenReturn(itemPage);
+        List<ItemDto> result = itemService.searchItems("item", LimitPageable.createPageable(0, 5));
+        assertFalse(result.isEmpty());
+        assertEquals(itemDto, result.get(0));
+    }
+
+    @Test
+    void test15_createItemWithRequest() {
+        itemDto.setRequestId(1L);
+        ItemRequest itemRequest = ItemRequest.builder()
+                .id(1L)
+                .requester(user)
+                .description("test")
+                .created(LocalDateTime.now()).items(new HashSet<>()).build();
+        item.setRequest(itemRequest);
+        when(itemRequestRepository.findById(1L)).thenReturn(Optional.ofNullable(itemRequest));
+        when(userRepository.findById(1L)).thenReturn(Optional.ofNullable(user));
+        when(itemRepository.save(item)).thenReturn(item);
+        ItemDto result = itemService.createItem(itemDto, 1L);
+        assertEquals(result, itemDto);
+    }
+
+    @Test
+    void test16_updateItemIfUserNotOwner() {
+        when(itemRepository.findById(1L)).thenReturn(Optional.ofNullable(item));
+        assertThrows(NotFoundException.class, () -> itemService.updateItem(itemDto, 1, 404));
+    }
+
+    @Test
+    void test17_getAllItemsByUserIdWithPage() throws PageableException {
+        Page<Item> itemPage = new PageImpl<>(Collections.singletonList(item));
+        when(itemRepository.findAllByOwner(user, LimitPageable.createPageable(0, 5))).thenReturn(itemPage);
+        Comment comment = Comment.builder().item(item).author(user).text("text").created(LocalDate.now()).build();
+        when(commentRepository.findByItem_IdOrderByCreatedDesc(item.getId())).thenReturn((List.of(comment)));
+        when(userService.findUserById(1L)).thenReturn(UserMapper.toUserDto(user));
+        List<ItemDto> result = itemService.getAllItemsByUserId(1L,
+                LimitPageable.createPageable(0, 5));
+        itemDto.setComments(Collections.singleton(CommentMapper.commentDto(comment)));
+        assertFalse(result.isEmpty());
+        assertEquals(result.get(0), itemDto);
     }
 }
