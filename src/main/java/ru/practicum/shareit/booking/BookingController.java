@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoOut;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
+@Slf4j
 public class BookingController {
     private final BookingService bookingService;
 
@@ -23,6 +25,7 @@ public class BookingController {
             @Valid @RequestBody BookingDto bookingDto,
             @RequestHeader("X-Sharer-User-Id") @NotNull long bookerId
     ) {
+        log.info("create booking:" + bookingDto);
         return bookingService.createBooking(bookingDto, bookerId);
     }
 
@@ -30,6 +33,7 @@ public class BookingController {
     public BookingDtoOut get(
             @PathVariable Long bookingId,
             @RequestHeader("X-Sharer-User-Id") @NotNull Long userId) {
+        log.info("get booking with id: " + bookingId);
         return bookingService.getBooking(bookingId, userId);
     }
 
@@ -39,6 +43,7 @@ public class BookingController {
             @PathVariable @NotNull Long bookingId,
             @RequestParam @NotNull Boolean approved
     ) {
+        log.info("approve booking with id: " + bookingId);
         return bookingService.approve(bookingId, userId, approved);
     }
 
@@ -48,7 +53,7 @@ public class BookingController {
             @RequestParam(defaultValue = "ALL") String state,
             @RequestParam(name = "from", required = false) Integer from,
             @RequestParam(name = "size", required = false) Integer size) throws PageableException {
-
+        log.info("getting all by user id: " + userId + " and state: " + state);
         return bookingService.getAllByUserId(userId, state, LimitPageable.createPageable(from, size));
     }
 
@@ -59,6 +64,7 @@ public class BookingController {
             @RequestParam(name = "from", required = false) Integer from,
             @RequestParam(name = "size", required = false) Integer size
     ) throws PageableException {
+        log.info("getting all by owner id: " + ownerId + " with sate: " + state);
         return bookingService.getAllByOwnerId(ownerId, state, LimitPageable.createPageable(from, size));
     }
 }
