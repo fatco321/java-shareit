@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.BookingMapper;
 import ru.practicum.shareit.booking.dto.ShortBookingDto;
@@ -16,6 +17,8 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.storage.CommentRepository;
 import ru.practicum.shareit.item.storage.ItemRepository;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.srorage.ItemRequestRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.service.UserService;
@@ -34,23 +37,35 @@ public class ItemServiceDataBase implements ItemService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final BookingRepository bookingRepository;
+    private final ItemRequestRepository itemRequestRepository;
 
     public ItemServiceDataBase(@Qualifier("DataBaseService") UserService userService,
                                ItemRepository itemRepository, UserRepository userRepository,
-                               CommentRepository commentRepository, BookingRepository bookingRepository) {
+                               CommentRepository commentRepository, BookingRepository bookingRepository, ItemRequestRepository itemRequestRepository) {
         this.userService = userService;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.bookingRepository = bookingRepository;
+        this.itemRequestRepository = itemRequestRepository;
     }
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(long userId) {
+    public List<ItemDto> getAllItemsByUserId(long userId, Pageable pageable) {
+        if (userService.findUserById(userId) == null) {
+            throw new NotFoundException("User with id " + userId + " not found");
+        }
         User user = UserMapper.fromUserDto(userService.findUserById(userId));
-        List<Item> items = itemRepository.findAllByOwner(user).stream()
-                .filter(x -> userId == x.getOwner().getId()).sorted(Comparator.comparing(Item::getId))
-                .collect(Collectors.toList());
+        List<Item> items;
+        if (pageable != null) {
+            items = itemRepository.findAllByOwner(user, pageable).stream()
+                    .filter(x -> userId == x.getOwner().getId()).sorted(Comparator.comparing(Item::getId))
+                    .collect(Collectors.toList());
+        } else {
+            items = itemRepository.findAllByOwner(user).stream()
+                    .filter(x -> userId == x.getOwner().getId()).sorted(Comparator.comparing(Item::getId))
+                    .collect(Collectors.toList());
+        }
         List<ItemDto> itemsDto = new ArrayList<>();
         for (Item item : items) {
             ItemDto itemDto = ItemMapper.toItemDto(item);
@@ -67,6 +82,11 @@ public class ItemServiceDataBase implements ItemService {
         Item item = ItemMapper.fromItemDto(itemDto);
         item.setOwner(userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException("user with id " + userId + " not found")));
+        if (itemDto.getRequestId() != null) {
+            ItemRequest itemRequest = itemRequestRepository.findById(itemDto.getRequestId())
+                    .orElseThrow(() -> new NotFoundException("Item request not found"));
+            item.setRequest(itemRequest);
+        }
         return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
@@ -90,13 +110,19 @@ public class ItemServiceDataBase implements ItemService {
     }
 
     @Override
-    public List<ItemDto> searchItems(String word) {
+    public List<ItemDto> searchItems(String word, Pageable pageable) {
         if (word.isEmpty()) {
             return new ArrayList<>();
         }
         List<ItemDto> itemsDto = new ArrayList<>();
-        for (Item item : itemRepository.findItemByText(word)) {
-            itemsDto.add(ItemMapper.toItemDto(item));
+        if (pageable != null) {
+            for (Item item : itemRepository.findItemByText(word, pageable)) {
+                itemsDto.add(ItemMapper.toItemDto(item));
+            }
+        } else {
+            for (Item item : itemRepository.findItemByText(word)) {
+                itemsDto.add(ItemMapper.toItemDto(item));
+            }
         }
         return itemsDto;
     }
@@ -104,7 +130,7 @@ public class ItemServiceDataBase implements ItemService {
     @Override
     public ItemDto getItemById(Long itemId, Long userId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() ->
-                new NotFoundException("Item with" + itemId + " not found"));
+                new NotFoundException("Item with " + itemId + " not found"));
         ItemDto itemDto = ItemMapper.toItemDto(item);
         itemDto.setComments(findComments(itemId));
         if (item.getOwner().getId().equals(userId)) {
