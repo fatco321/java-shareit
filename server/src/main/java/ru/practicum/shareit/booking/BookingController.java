@@ -10,17 +10,18 @@ import ru.practicum.shareit.util.LimitPageable;
 
 import java.util.List;
 
+import static ru.practicum.shareit.util.HeaderConst.SHAREIT_HEADER;
+
 @RestController
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 public class BookingController {
     private final BookingService bookingService;
-    private static final String header = "X-Sharer-User-Id";
 
     @PostMapping
     public BookingDtoOut create(
             @RequestBody BookingDto bookingDto,
-            @RequestHeader(header) long bookerId
+            @RequestHeader(SHAREIT_HEADER) long bookerId
     ) {
         return bookingService.createBooking(bookingDto, bookerId);
     }
@@ -28,13 +29,13 @@ public class BookingController {
     @GetMapping("{bookingId}")
     public BookingDtoOut get(
             @PathVariable Long bookingId,
-            @RequestHeader(header) Long userId) {
+            @RequestHeader(SHAREIT_HEADER) Long userId) {
         return bookingService.getBooking(bookingId, userId);
     }
 
     @PatchMapping("{bookingId}")
     public BookingDtoOut approve(@PathVariable Long bookingId,
-                                 @RequestHeader(header) Long userId,
+                                 @RequestHeader(SHAREIT_HEADER) Long userId,
                                  @RequestParam Boolean approved
     ) {
         return bookingService.approve(bookingId, userId, approved);
@@ -42,7 +43,7 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoOut> getAllByUserId(
-            @RequestHeader(header) Long userId,
+            @RequestHeader(SHAREIT_HEADER) Long userId,
             @RequestParam(defaultValue = "ALL") String state,
             @RequestParam(name = "from", required = false) Integer from,
             @RequestParam(name = "size", required = false) Integer size) throws PageableException {
@@ -51,7 +52,7 @@ public class BookingController {
 
     @GetMapping("/owner")
     public List<BookingDtoOut> getAllByOwnerId(
-            @RequestHeader(header) Long ownerId,
+            @RequestHeader(SHAREIT_HEADER) Long ownerId,
             @RequestParam(defaultValue = "ALL") String state,
             @RequestParam(name = "from", required = false) Integer from,
             @RequestParam(name = "size", required = false) Integer size

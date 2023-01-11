@@ -16,17 +16,18 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
+import static ru.practicum.shareit.util.HeaderConst.SHAREIT_HEADER;
+
 @Controller
 @RequestMapping(path = "/bookings")
 @RequiredArgsConstructor
 @Slf4j
 @Validated
 public class BookingController {
-    private static final String header = "X-Sharer-User-Id";
     private final BookingClient bookingClient;
 
     @GetMapping
-    public ResponseEntity<Object> getBookings(@RequestHeader(header) Long userId,
+    public ResponseEntity<Object> getBookings(@RequestHeader(SHAREIT_HEADER) Long userId,
                                               @RequestParam(name = "state", defaultValue = "all") String stateParam,
                                               @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
                                               @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
@@ -37,7 +38,7 @@ public class BookingController {
     }
 
     @GetMapping("/owner")
-    public ResponseEntity<Object> getAllBookingsByOwner(@RequestHeader(header) Long ownerId,
+    public ResponseEntity<Object> getAllBookingsByOwner(@RequestHeader(SHAREIT_HEADER) Long ownerId,
                                                         @RequestParam(name = "state", defaultValue = "all") String stateParam,
                                                         @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                         @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
@@ -48,14 +49,14 @@ public class BookingController {
     }
 
     @PostMapping
-    public ResponseEntity<Object> bookItem(@RequestHeader(header) Long userId,
+    public ResponseEntity<Object> bookItem(@RequestHeader(SHAREIT_HEADER) Long userId,
                                            @RequestBody @Valid BookItemRequestDto requestDto) {
         log.info("Creating booking {}, userId={}", requestDto, userId);
         return bookingClient.bookItem(userId, requestDto);
     }
 
     @GetMapping("/{bookingId}")
-    public ResponseEntity<Object> getBooking(@RequestHeader(header) Long userId,
+    public ResponseEntity<Object> getBooking(@RequestHeader(SHAREIT_HEADER) Long userId,
                                              @PathVariable Long bookingId) {
         log.info("Get booking {}, userId={}", bookingId, userId);
         return bookingClient.getBooking(userId, bookingId);
@@ -64,7 +65,7 @@ public class BookingController {
     @ResponseBody
     @PatchMapping("/{bookingId}")
     public ResponseEntity<Object> approveBooking(@PathVariable @NotNull Long bookingId,
-                                                 @RequestHeader(header) Long userId,
+                                                 @RequestHeader(SHAREIT_HEADER) Long userId,
                                                  @RequestParam @NotNull Boolean approved) {
         log.info("BookingId={} was {} approve, userId={}", bookingId, approved, userId);
         return bookingClient.approveBooking(bookingId, userId, approved);

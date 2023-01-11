@@ -14,29 +14,30 @@ import javax.validation.Valid;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 
+import static ru.practicum.shareit.util.HeaderConst.SHAREIT_HEADER;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping(path = "/items")
 @Slf4j
 public class ItemController {
-    private static final String header = "X-Sharer-User-Id";
     private final ItemClient itemClient;
 
     @PostMapping
-    public ResponseEntity<Object> createItem(@RequestHeader(header) Long userId,
+    public ResponseEntity<Object> createItem(@RequestHeader(SHAREIT_HEADER) Long userId,
                                              @Validated({Create.class}) @RequestBody ItemDto itemDto) {
         log.info("User: {} create item: {}", userId, itemDto);
         return itemClient.createItem(userId, itemDto);
     }
 
     @GetMapping("/{itemId}")
-    public ResponseEntity<Object> getItemById(@RequestHeader(header) Long userId, @PathVariable Long itemId) {
+    public ResponseEntity<Object> getItemById(@RequestHeader(SHAREIT_HEADER) Long userId, @PathVariable Long itemId) {
         log.info("User: {} get item: {}", userId, itemId);
         return itemClient.getItemById(userId, itemId);
     }
 
     @GetMapping
-    public ResponseEntity<Object> getAllUserItems(@RequestHeader(header) Long userId,
+    public ResponseEntity<Object> getAllUserItems(@RequestHeader(SHAREIT_HEADER) Long userId,
                                                   @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                   @Positive @RequestParam(name = "size", defaultValue = "10") Integer size) {
         log.info("Get items user: {}", userId);
@@ -52,18 +53,21 @@ public class ItemController {
     }
 
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<Object> deleteItem(@RequestHeader(header) Long userId, @PathVariable Long itemId) {
+    public ResponseEntity<Object> deleteItem(@RequestHeader(SHAREIT_HEADER) Long userId,
+                                             @PathVariable Long itemId) {
         return itemClient.deleteItem(userId, itemId);
     }
 
     @PatchMapping("/{itemId}")
-    public ResponseEntity<Object> updateItem(@RequestHeader(header) Long userId, @PathVariable Long itemId,
+    public ResponseEntity<Object> updateItem(@RequestHeader(SHAREIT_HEADER) Long userId,
+                                             @PathVariable Long itemId,
                                              @RequestBody ItemDto itemDto) {
         return itemClient.updateItem(itemId, userId, itemDto);
     }
 
     @PostMapping("/{itemId}/comment")
-    public ResponseEntity<Object> createComment(@RequestHeader(header) Long userId, @PathVariable Long itemId,
+    public ResponseEntity<Object> createComment(@RequestHeader(SHAREIT_HEADER) Long userId,
+                                                @PathVariable Long itemId,
                                                 @Valid @RequestBody CommentDto commentDto) {
         return itemClient.createComment(commentDto, itemId, userId);
     }

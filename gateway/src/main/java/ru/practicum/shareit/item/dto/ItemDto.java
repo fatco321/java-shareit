@@ -6,6 +6,7 @@ import ru.practicum.shareit.booking.dto.ShortBookingDto;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.util.Set;
 
 @Getter
@@ -15,6 +16,7 @@ import java.util.Set;
 @AllArgsConstructor
 @RequiredArgsConstructor
 public class ItemDto {
+    @Positive
     private long id;
     @NotBlank(groups = {Create.class})
     private String name;
